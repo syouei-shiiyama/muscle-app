@@ -1,58 +1,29 @@
-let selectedPresetId = null;
+// プリセットカードの選択処理
+document.addEventListener("DOMContentLoaded", () => {
+  const cards = document.querySelectorAll(".preset-card");
+  const nextButton = document.getElementById("next-button");
 
-async function loadPresets() {
-  const res = await fetch("/presets");
-  const presets = await res.json();
+  let selectedId = null;
 
-  const container = document.getElementById("preset-container");
-  container.innerHTML = "";
+  cards.forEach((card) => {
+    card.addEventListener("click", () => {
+      // 一旦全カードの選択解除
+      cards.forEach((c) => c.classList.remove("selected"));
 
-  presets.forEach((preset) => {
-    const card = document.createElement("div");
-    card.className = "preset-card";
-
-    card.innerHTML = `
-      <h3>${preset.name}</h3>
-      <p>${preset.description}</p>
-    `;
-
-    card.onclick = () => {
-      selectedPresetId = preset.id;
-
-      document
-        .querySelectorAll(".preset-card")
-        .forEach((c) => c.classList.remove("selected"));
-
+      // クリックしたカードを選択状態に
       card.classList.add("selected");
+      selectedId = card.dataset.id;
 
-      document.getElementById("next-button").disabled = false;
-      document.getElementById("selected-info").textContent =
-        `選択中: ${preset.name}`;
-    };
-
-    container.appendChild(card);
+      // 「次へ進む」ボタンを有効化
+      nextButton.disabled = false;
+    });
   });
 
-  // カスタムカード
-  const custom = document.createElement("div");
-  custom.className = "preset-card";
-  custom.innerHTML = `<h3>カスタム</h3><p>自分で目標を作る</p>`;
+  // 「次へ進む」クリックで input 画面へ遷移
+  nextButton.addEventListener("click", () => {
+    if (!selectedId) return;
 
-  custom.onclick = () => {
-    selectedPresetId = null;
-
-    document
-      .querySelectorAll(".preset-card")
-      .forEach((c) => c.classList.remove("selected"));
-
-    custom.classList.add("selected");
-
-    document.getElementById("next-button").disabled = false;
-    document.getElementById("selected-info").textContent =
-      "選択中: カスタム目標";
-  };
-
-  container.appendChild(custom);
-}
-
-document.addEventListener("DOMContentLoaded", loadPresets);
+    // preset をクエリに付けて input.html へ
+    window.location.href = `/static/input.html?preset=${selectedId}`;
+  });
+});

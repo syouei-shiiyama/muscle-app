@@ -2,23 +2,50 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>筋トレモチベアプリ - ターゲット選択</title>
+  <title>目標のカラダを選ぶ</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>なりたい自分を選ぶ</h1>
-    <p class="subtitle">
-      まずは目標とするタイプを選んでください（あとから追加もできます）
-    </p>
+  <div class="app-wrapper">
+    <h1>目標のカラダを選ぶ</h1>
+    <p>まずは目指したい体型を選んでください。あとから増やしていくこともできます。</p>
 
-    <div id="preset-container" class="preset-list"></div>
+    <div class="preset-grid">
+      <div class="preset-card" onclick="goPreset('goku')">
+        <div class="preset-name">悟空タイプ</div>
+        <div class="preset-desc">
+          筋肉量もしっかり、戦闘力高めゴリゴリ系。高めのBMIを目指すモード。
+        </div>
+      </div>
 
-    <button id="next-button" disabled>次へ進む</button>
+      <div class="preset-card" onclick="goPreset('athlete')">
+        <div class="preset-name">スマートアスリートタイプ</div>
+        <div class="preset-desc">
+          競技で動きやすいバランス型。筋肉と軽さのバランス重視モード。
+        </div>
+      </div>
 
-    <div id="selected-info" class="selected-info"></div>
+      <div class="preset-card" onclick="goPreset('bulk')">
+        <div class="preset-name">パワーリフタータイプ</div>
+        <div class="preset-desc">
+          重量を最優先する爆発力モード。高重量志向の人向け。
+        </div>
+      </div>
+
+      <div class="preset-card" onclick="goPreset('custom')">
+        <div class="preset-name">カスタム</div>
+        <div class="preset-desc">
+          自分の理想数値をあとから細かく設定したい人向け。
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script src="/static/script.js"></script>
+  <script>
+    function goPreset(id) {
+      // そのプリセットIDで input画面へ
+      window.location.href = `/static/input.html?preset=${id}`;
+    }
+  </script>
 </body>
 </html>

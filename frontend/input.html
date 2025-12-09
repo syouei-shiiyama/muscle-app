@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>現在のカラダを入力</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-wrapper">
+    <h1>現在のカラダを入力</h1>
+
+    <p id="preset-label"></p>
+
+    <div class="form-group">
+      <label class="form-label">
+        身長 (cm):
+        <input id="height" type="number" />
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        体重 (kg):
+        <input id="weight" type="number" />
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">
+        体脂肪率 (%):
+        <input id="bodyFat" type="number" />
+      </label>
+    </div>
+
+    <button id="calc-button" class="primary-button">レベルを計算</button>
+
+    <!-- BMI 結果 -->
+    <p id="result"></p>
+
+    <!-- ★ 称号＋ゲージを表示するボックス -->
+    <div id="level-box" class="level-box">
+      <div id="level-title" class="level-title"></div>
+      <div class="level-bar">
+        <div id="level-bar-inner" class="level-bar-inner"></div>
+      </div>
+      <p id="level-detail" class="level-detail"></p>
+    </div>
+
+    <!-- 前回の記録 -->
+    <div id="last-record" class="last-record-box"></div>
+  </div>
+
+      <!-- これまでの推移グラフ -->
+    <section class="history-section">
+      <h2>これまでの推移</h2>
+      <p class="history-note">
+        計算するたびに記録され、目標達成レベルの推移が見られます。
+      </p>
+      <canvas id="historyChart"></canvas>
+    </section>
+
+
+  <script>
+    // ===== 定数 =====
+      const STORAGE_KEY_LAST = "muscle_last_record_v1";
+  const STORAGE_KEY_HISTORY = "muscle_history_v1";  // ★履歴用
+
+  let historyChart = null; // ★グラフのインスタンスを保存
+
+  // クエリパラメータから preset を取得
+  const params = new URLSearchParams(window.location.search);
+
+    const presetId = params.get("preset") || "goku";
+
+    const presetLabel = document.getElementById("preset-label");
+    if (presetId === "goku") {
+      presetLabel.textContent = "選択中の目標: 悟空タイプ";
+    } else if (presetId === "athlete") {
+      presetLabel.textContent = "選択中の目標: スマートアスリートタイプ";
+    } else if (presetId === "bulk") {
+      presetLabel.textContent = "選択中の目標: パワーリフタータイプ";
+    } else if (presetId === "custom") {
+      presetLabel.textContent = "選択中の目標: カスタム（自分で設定）";
+    } else {
+      presetLabel.textContent = "選択中の目標: 不明";
+    }
+
+    // ===== レベルから称号を決める関数 =====
+    function getRank(presetId, level) {
+      if (presetId === "goku") {
+        if (level < 20) {
+          return {
+            title: "修行不足の地球人",
+            icon: "😴",
+            message: "今日から本気出そう。まずは週2トレーニングから！",
+          };
+        } else if (level < 40) {
+          return {
+            title: "カメハウス見習い",
+            icon: "🐢",
+            message: "基礎はできてきた！フォームを丁寧に意識しよう。",
+          };
+        } else if (level < 60) {
+          return {
+            title: "界王星で修行中",
+            icon: "🪐",
+            message: "だいぶ仕上がってきた。重量を少し攻めてもOK！",
+          };
+        } else if (level < 80) {
+          return {
+            title: "スーパーサイヤ人",
+            icon: "💥",
+            message: "かなりいいカラダ！周りからも変化に気づかれるレベル。",
+          };
+        } else if (level < 95) {
+          return {
+            title: "スーパーサイヤ人2",
+            icon: "⚡",
+            message: "トップレベルの仕上がり。食事と睡眠もプロ仕様でいこう。",
+          };
+        } else {
+          return {
+            title: "伝説のスーパーサイヤ人3",
+            icon: "🌟",
+            message: "もはや伝説級。維持すること自体が高難度ミッション！",
+          };
+        }
+      }
+
+      // 他のプリセットはとりあえず共通
+      if (level < 40) {
+        return { title: "ルーキー", icon: "🌱", message: "ここから一気に伸びるゾーン！" };
+      } else if (level < 70) {
+        return { title: "中堅アスリート", icon: "🏃", message: "土台はバッチリ。質を高めていこう！" };
+      } else {
+        return { title: "エリートクラス", icon: "🏆", message: "かなり仕上がってる。大会も狙えるレベル！" };
+      }
+    }
+
+    // ===== 前回の記録を表示する関数 =====
+    function showLastRecord(record) {
+      const box = document.getElementById("last-record");
+      if (!record) {
+        box.textContent = "まだ記録はありません。";
+        return;
+      }
+
+      const date = new Date(record.savedAt);
+      const dateText = isNaN(date)
+        ? ""
+        : `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+
+      let presetText = "";
+      if (record.presetId === "goku") presetText = "悟空タイプ";
+      else if (record.presetId === "athlete") presetText = "スマートアスリートタイプ";
+      else if (record.presetId === "bulk") presetText = "パワーリフタータイプ";
+      else if (record.presetId === "custom") presetText = "カスタム";
+
+      box.innerHTML = `
+        <strong>前回の記録</strong><br>
+        目標: ${presetText || "不明"}<br>
+        BMI: ${record.bmi} / レベル: ${record.level}%<br>
+        身長: ${record.height}cm  体重: ${record.weight}kg  体脂肪率: ${record.fat}%<br>
+        ${dateText ? `記録日: ${dateText}` : ""}
+      `;
+    }
+
+        // ===== 履歴からグラフを描画 =====
+    function updateHistoryChart(allRecords) {
+      // 今の preset の履歴だけに絞る
+      const records = allRecords.filter(r => r.presetId === presetId);
+
+      if (records.length === 0) {
+        // 履歴がなければグラフは消す／何もしない
+        if (historyChart) {
+          historyChart.destroy();
+          historyChart = null;
+        }
+        return;
+      }
+
+      const labels = records.map((r, i) => {
+        const d = new Date(r.savedAt);
+        if (isNaN(d)) return `#${i + 1}`;
+        return `${d.getMonth() + 1}/${d.getDate()}`;
+      });
+
+      const levels = records.map(r => r.level);
+
+      const ctx = document.getElementById("historyChart").getContext("2d");
+
+      if (historyChart) {
+        historyChart.destroy();
+      }
+
+      historyChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "目標達成レベル（%）",
+              data: levels,
+              tension: 0.3,
+              borderWidth: 2,
+              pointRadius: 3,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              ticks: {
+                stepSize: 20,
+              },
+            },
+          },
+        },
+      });
+    }
+
+
+    // ===== ページ読み込み時：localStorage から復元 =====
+       (function loadOnStart() {
+      try {
+        // 最新記録
+        const rawLast = localStorage.getItem(STORAGE_KEY_LAST);
+        let record = null;
+
+        if (rawLast) {
+          record = JSON.parse(rawLast);
+
+          // 今の preset と一致してたらフォームも埋める
+          if (record.presetId === presetId) {
+            document.getElementById("height").value = record.height ?? "";
+            document.getElementById("weight").value = record.weight ?? "";
+            document.getElementById("bodyFat").value = record.fat ?? "";
+          }
+
+          // 前回の記録表示
+          showLastRecord(record);
+
+          // 称号＋ゲージ復元
+          if (record.level != null) {
+            const rank = getRank(record.presetId, record.level);
+            const titleEl = document.getElementById("level-title");
+            const detailEl = document.getElementById("level-detail");
+            const barInner = document.getElementById("level-bar-inner");
+
+            titleEl.textContent = `${rank.icon} ${rank.title}（${record.level}%）`;
+            detailEl.textContent = rank.message;
+            barInner.style.width = `${record.level}%`;
+          }
+        } else {
+          showLastRecord(null);
+        }
+
+        // 履歴をロードしてグラフ更新
+        const rawHist = localStorage.getItem(STORAGE_KEY_HISTORY);
+        const historyList = rawHist ? JSON.parse(rawHist) : [];
+        updateHistoryChart(historyList);
+
+      } catch (e) {
+        console.error("起動時の読み込みに失敗:", e);
+        showLastRecord(null);
+      }
+    })();
+
+
+    // ===== 計算ボタン =====
+    document.getElementById("calc-button").addEventListener("click", async () => {
+      const h = Number(document.getElementById("height").value);
+      const w = Number(document.getElementById("weight").value);
+      const f = Number(document.getElementById("bodyFat").value);
+
+      if (!h || !w) {
+        alert("身長と体重は入力してください");
+        return;
+      }
+
+      // バックエンドに計算依頼
+      const res = await fetch("/calc_level", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          height: h,
+          weight: w,
+          fat: f,
+          preset_id: presetId,
+        }),
+      });
+
+      const data = await res.json();
+
+      // BMI 表示
+      document.getElementById("result").textContent =
+        `あなたの現在のBMIは ${data.bmi} です（体脂肪率: ${f}%）。`;
+
+      // ★ 称号＋ゲージ表示
+      if (data.level != null) {
+        const rank = getRank(presetId, data.level);
+        const titleEl = document.getElementById("level-title");
+        const detailEl = document.getElementById("level-detail");
+        const barInner = document.getElementById("level-bar-inner");
+
+        titleEl.textContent = `${rank.icon} ${rank.title}（${data.level}%）`;
+        detailEl.textContent = rank.message;
+        barInner.style.width = `${data.level}%`;
+      }
+
+            // 記録オブジェクト
+      const record = {
+        presetId: presetId,
+        height: h,
+        weight: w,
+        fat: f,
+        bmi: data.bmi,
+        level: data.level,
+        savedAt: new Date().toISOString(),
+      };
+
+      // 最新記録として保存
+      try {
+        localStorage.setItem(STORAGE_KEY_LAST, JSON.stringify(record));
+        showLastRecord(record);
+      } catch (e) {
+        console.error("最新記録の保存に失敗しました:", e);
+      }
+
+      // 履歴として追加
+      try {
+        const rawHist = localStorage.getItem(STORAGE_KEY_HISTORY);
+        const historyList = rawHist ? JSON.parse(rawHist) : [];
+
+        historyList.push(record);
+
+        // 直近50件だけ残すなど（多すぎ防止）
+        const trimmed = historyList.slice(-50);
+
+        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(trimmed));
+        updateHistoryChart(trimmed);
+      } catch (e) {
+        console.error("履歴の保存に失敗しました:", e);
+      }
+
+    });
+  </script>
+</body>
+</html>
