@@ -10,29 +10,33 @@
     <h1>目標のカラダを選ぶ</h1>
     <p>まずは目指したい体型を選んでください。あとから増やしていくこともできます。</p>
 
+    <button onclick="location.href='/static/login.html'">
+      ログイン / 新規登録
+    </button>
+
     <div class="preset-grid">
-      <div class="preset-card" onclick="goPreset('goku')">
+      <div class="preset-card" data-id="goku">
         <div class="preset-name">悟空タイプ</div>
         <div class="preset-desc">
           筋肉量もしっかり、戦闘力高めゴリゴリ系。高めのBMIを目指すモード。
         </div>
       </div>
 
-      <div class="preset-card" onclick="goPreset('athlete')">
+      <div class="preset-card" data-id="athlete">
         <div class="preset-name">スマートアスリートタイプ</div>
         <div class="preset-desc">
           競技で動きやすいバランス型。筋肉と軽さのバランス重視モード。
         </div>
       </div>
 
-      <div class="preset-card" onclick="goPreset('bulk')">
+      <div class="preset-card" data-id="bulk">
         <div class="preset-name">パワーリフタータイプ</div>
         <div class="preset-desc">
           重量を最優先する爆発力モード。高重量志向の人向け。
         </div>
       </div>
 
-      <div class="preset-card" onclick="goPreset('custom')">
+      <div class="preset-card" data-id="custom">
         <div class="preset-name">カスタム</div>
         <div class="preset-desc">
           自分の理想数値をあとから細かく設定したい人向け。
@@ -41,11 +45,7 @@
     </div>
   </div>
 
-  <script>
-    function goPreset(id) {
-      // そのプリセットIDで input画面へ
-      window.location.href = `/static/input.html?preset=${id}`;
-    }
-  </script>
+  <!-- ここで外部JSを読み込む -->
+  <script src="/static/script.js"></script>
 </body>
 </html>

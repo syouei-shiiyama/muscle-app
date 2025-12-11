@@ -6,13 +6,26 @@ from pydantic import BaseModel
 import os
 import auth
 from db import init_db
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
+from db import get_db
+from models import Measurement, User
+from auth import get_current_user  
+
+from typing import List
+from datetime import datetime 
+from sqlalchemy.orm import Session
+
+
+
 
 from presets import PRESET_TARGETS  # 同じ backend フォルダ内の presets.py から読み込み
 
 app = FastAPI()
 
 #DB 初期化
-init_db
+init_db()
 
 
 # ====== モデル ======
@@ -77,6 +90,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class RecordIn(BaseModel):
+    preset_id: str
+    height: float
+    weight: float
+    fat: float
+    level: float
+
+class RecordOut(BaseModel):
+    id: int
+    preset_id: str
+    height: float
+    weight: float
+    fat: float
+    level: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 
 # ====== フロント配信設定 ======
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -92,3 +125,43 @@ def read_root():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 app.include_router(auth.router)
+
+
+@app.post("/records")
+def create_record(
+    record: RecordIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    m = Measurement(
+        user_id=current_user.id,
+        preset_id=record.preset_id,
+        height=record.height,
+        weight=record.weight,
+        fat=record.fat,
+        level=record.level,
+    )
+    db.add(m)
+    db.commit()
+    db.refresh(m)
+    return {
+        "id": m.id,
+        "created_at": m.created_at,
+        "level": m.level,
+    }
+
+
+@app.get("/records", response_model=List[RecordOut])
+def list_records(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    records = (
+        db.query(Measurement)
+        .filter(Measurement.user_id == current_user.id)
+        .order_by(Measurement.created_at.asc())
+        .all()
+    )
+    return records
+
+
