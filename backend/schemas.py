@@ -5,6 +5,7 @@ from typing import Optional
 
 class UserBase(BaseModel):
     email: EmailStr
+    username: str
 
 
 class UserCreate(UserBase):
@@ -15,13 +16,22 @@ class UserRead(UserBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str 
+    email: str        
+    username: str
 
 
 class TokenData(BaseModel):
     user_id: Optional[int] = None
+
+
+class UserCreate(BaseModel):
+    email: str
+    username: str  
+    password: str
+

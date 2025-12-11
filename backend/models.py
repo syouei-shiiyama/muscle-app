@@ -1,19 +1,18 @@
-# backend/models.py
-
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from db import Base   # すでにある Base をインポート（db.py にあるはず）
+from db import Base   # db.py に定義している Base をインポート
+
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    email = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, nullable=False)      # ★ 表示用のユーザー名
+    hashed_password = Column(String, nullable=False)
 
-    # ★ 追加：ユーザーが持つ測定記録
     measurements = relationship("Measurement", back_populates="user")
 
 

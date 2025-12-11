@@ -4,32 +4,100 @@
   <meta charset="UTF-8" />
   <title>ログイン / 新規登録</title>
   <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    /* タブ切り替え用の軽いスタイル（既存デザインに足すイメージ） */
+    .tab-switch {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab-button {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      opacity: 0.6;
+    }
+    .tab-button.active {
+      opacity: 1;
+      box-shadow: 0 0 10px rgba(0, 200, 255, 0.6);
+    }
+    .panel {
+      display: none;
+    }
+    .panel.active {
+      display: block;
+    }
+  </style>
 </head>
 <body>
   <div class="app-wrapper">
     <h1>ログイン / 新規登録</h1>
 
-    <form id="login-form">
-      <div class="form-group">
-        <label class="form-label" for="login-email">
-          メールアドレス（ユーザー名でもOK）
-        </label>
-        <input id="login-email" type="text" required />
-      </div>
+    <!-- タブ -->
+    <div class="tab-switch">
+      <button id="tab-login" class="tab-button active">ログイン</button>
+      <button id="tab-register" class="tab-button">新規登録</button>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label" for="login-password">
-          パスワード
-        </label>
-        <input id="login-password" type="password" required />
-      </div>
+    <!-- ログインパネル -->
+    <div id="login-panel" class="panel active">
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="login-email">
+            メールアドレス
+          </label>
+          <input id="login-email" type="text" required />
+        </div>
 
-      <button type="submit" id="login-button" class="primary-button">
-        ログイン
-      </button>
-    </form>
+        <div class="form-group">
+          <label class="form-label" for="login-password">
+            パスワード
+          </label>
+          <input id="login-password" type="password" required />
+        </div>
 
-    <p id="login-message" style="margin-top: 8px;"></p>
+        <button type="submit" id="login-button" class="primary-button">
+          ログイン
+        </button>
+      </form>
+
+      <p id="login-message" style="margin-top: 8px;"></p>
+    </div>
+
+    <!-- 新規登録パネル -->
+    <div id="register-panel" class="panel">
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label" for="reg-email">
+            メールアドレス
+          </label>
+          <input id="reg-email" type="text" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-username">
+            表示名（ニックネーム）
+          </label>
+          <input id="reg-username" type="text" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-password">
+            パスワード
+          </label>
+          <input id="reg-password" type="password" required />
+        </div>
+
+        <button type="submit" id="register-button" class="primary-button">
+          登録
+        </button>
+      </form>
+
+      <p id="register-message" style="margin-top: 8px;"></p>
+    </div>
 
     <p style="margin-top: 24px;">
       <a href="/static/index.html">← トップに戻る</a>
@@ -37,28 +105,47 @@
   </div>
 
   <script>
-    // ページ読み込み後に実行
     document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById("login-form");
-      const emailInput = document.getElementById("login-email");
-      const passwordInput = document.getElementById("login-password");
-      const messageP = document.getElementById("login-message");
+      // ===== タブ切り替え =====
+      const tabLogin = document.getElementById("tab-login");
+      const tabRegister = document.getElementById("tab-register");
+      const loginPanel = document.getElementById("login-panel");
+      const registerPanel = document.getElementById("register-panel");
 
-      form.addEventListener("submit", async (e) => {
+      function showLogin() {
+        tabLogin.classList.add("active");
+        tabRegister.classList.remove("active");
+        loginPanel.classList.add("active");
+        registerPanel.classList.remove("active");
+      }
+
+      function showRegister() {
+        tabRegister.classList.add("active");
+        tabLogin.classList.remove("active");
+        registerPanel.classList.add("active");
+        loginPanel.classList.remove("active");
+      }
+
+      tabLogin.addEventListener("click", showLogin);
+      tabRegister.addEventListener("click", showRegister);
+
+      // ===== ログイン処理 =====
+      const loginForm = document.getElementById("login-form");
+      const loginMessage = document.getElementById("login-message");
+
+      loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        messageP.textContent = "";
+        loginMessage.textContent = "";
 
-        const username = emailInput.value;
-        const password = passwordInput.value;
+        const username = document.getElementById("login-email").value;
+        const password = document.getElementById("login-password").value;
 
         if (!username || !password) {
-          messageP.textContent = "メールアドレスとパスワードを入力してください。";
+          loginMessage.textContent = "メールアドレスとパスワードを入力してください。";
           return;
         }
 
         try {
-          // FastAPI の /auth/login は OAuth2PasswordRequestForm なので
-          // x-www-form-urlencoded 形式で送る
           const res = await fetch("/auth/login", {
             method: "POST",
             headers: {
@@ -74,23 +161,66 @@
 
           if (!res.ok) {
             console.error("login error:", data);
-            messageP.textContent = data.detail || "ログインに失敗しました。";
+            loginMessage.textContent = data.detail || "ログインに失敗しました。";
             return;
           }
 
-          // ★ ここが大事：トークン & ユーザーIDを保存
+          // トークン & ユーザー情報を保存
           localStorage.setItem("access_token", data.access_token);
-          localStorage.setItem("user_email", username);
+          localStorage.setItem("user_email", data.email);
+          localStorage.setItem("user_name", data.username);
 
-          messageP.textContent = "ログインに成功しました！";
+          loginMessage.textContent = "ログインに成功しました！";
 
-          // 少し待ってからトップへ戻る
           setTimeout(() => {
             window.location.href = "/static/index.html";
           }, 500);
         } catch (err) {
           console.error("login fetch error:", err);
-          messageP.textContent = "通信エラーが発生しました。";
+          loginMessage.textContent = "通信エラーが発生しました。";
+        }
+      });
+
+      // ===== 新規登録処理 =====
+      const registerForm = document.getElementById("register-form");
+      const registerMessage = document.getElementById("register-message");
+
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        registerMessage.textContent = "";
+
+        const email = document.getElementById("reg-email").value;
+        const username = document.getElementById("reg-username").value;
+        const password = document.getElementById("reg-password").value;
+
+        if (!email || !username || !password) {
+          registerMessage.textContent = "すべて入力してください。";
+          return;
+        }
+
+        try {
+          const res = await fetch("/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, username, password }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            console.error("register error:", data);
+            registerMessage.textContent = data.detail || "登録に失敗しました。";
+            return;
+          }
+
+          registerMessage.textContent = "登録に成功しました！そのままログインしてください。";
+
+          // 登録成功したらログインタブに切り替える
+          showLogin();
+          document.getElementById("login-email").value = email;
+        } catch (err) {
+          console.error("register fetch error:", err);
+          registerMessage.textContent = "通信エラーが発生しました。";
         }
       });
     });

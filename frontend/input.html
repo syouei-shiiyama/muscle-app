@@ -7,10 +7,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- ログイン中ユーザーの表示欄 -->
+  <div id="user-info" style="text-align:right; margin:10px; font-size:16px;"></div>
   <div class="app-wrapper">
     <h1>現在のカラダを入力</h1>
 
     <p id="preset-label"></p>
+
+    <p id="login-user-display"></p>
+
 
     <div class="form-group">
       <label class="form-label">
@@ -61,8 +66,21 @@
   </section>
 
   <script>
+
+     const userInfo = document.getElementById("user-info");
+  if (userInfo) {
+    const name = localStorage.getItem("user_name");
+    const token = localStorage.getItem("access_token");
+
+    if (name && token) {
+      userInfo.textContent = `ログイン中：${name} さん`;
+    } else {
+      userInfo.innerHTML = `<a href="/static/login.html">ログイン / 新規登録</a>`;
+    }
+  }
+  
     document.addEventListener("DOMContentLoaded", () => {
-      // ====== 共通変数 ======
+      // ===== 共通変数 =====
       const token = localStorage.getItem("access_token"); // login.html で保存済み
       const params = new URLSearchParams(window.location.search);
       const presetId = params.get("preset") || "goku";
@@ -73,7 +91,7 @@
 
       let historyChart = null;
 
-      // ====== プリセット表示 ======
+      // ===== プリセット表示 =====
       if (presetId === "goku") {
         presetLabel.textContent = "選択中の目標: 悟空タイプ";
       } else if (presetId === "athlete") {
@@ -86,7 +104,7 @@
         presetLabel.textContent = "選択中の目標: 不明";
       }
 
-      // ====== レベルから称号を決める関数 ======
+      // ===== レベルから称号を決める関数 =====
       function getRank(presetId, level) {
         if (presetId === "goku") {
           if (level < 20) {
@@ -128,7 +146,7 @@
           }
         }
 
-        // 他プリセットは共通
+        // 他プリセットは共通ランク
         if (level < 40) {
           return { title: "ルーキー", icon: "🌱", message: "ここから一気に伸びるゾーン！" };
         } else if (level < 70) {
@@ -138,7 +156,7 @@
         }
       }
 
-      // ====== 前回の記録表示（サーバーの Measurement から） ======
+      // ===== 前回の記録表示（サーバーの Measurement から） =====
       function showLastRecordFromServer(record) {
         if (!record) {
           lastRecordBox.textContent = "まだ記録はありません。";
@@ -156,10 +174,12 @@
         else if (record.preset_id === "bulk") presetText = "パワーリフタータイプ";
         else if (record.preset_id === "custom") presetText = "カスタム";
 
-        // BMI を計算（サーバーには保存してないのでここで計算）
-        const bmi = record.height
-          ? Math.round((record.weight / Math.pow(record.height / 100, 2)) * 10) / 10
-          : null;
+        // BMI を計算（身長があれば）
+        let bmi = null;
+        if (record.height && record.weight) {
+          bmi = record.weight / Math.pow(record.height / 100, 2);
+          bmi = Math.round(bmi * 10) / 10;
+        }
 
         lastRecordBox.innerHTML = `
           <strong>前回の記録</strong><br>
@@ -170,9 +190,9 @@
         `;
       }
 
-      // ====== グラフ描画（サーバーからのリスト） ======
+      // ===== グラフ描画（サーバーからのリスト） =====
       function updateHistoryChartFromServer(records) {
-        // 今の preset の履歴だけ
+        // 今の preset の履歴のみ
         const filtered = records.filter(r => r.preset_id === presetId);
 
         if (filtered.length === 0) {
@@ -223,7 +243,7 @@
         });
       }
 
-      // ====== サーバーから履歴を読み込む ======
+      // ===== サーバーから履歴を読み込む =====
       async function loadHistoryFromServer() {
         if (!token) {
           // 未ログイン時
@@ -264,10 +284,10 @@
         }
       }
 
-      // ====== 起動時：履歴読み込み ======
+      // ===== 起動時：履歴読み込み =====
       loadHistoryFromServer();
 
-      // ====== 計算ボタン ======
+      // ===== 計算ボタン =====
       document.getElementById("calc-button").addEventListener("click", async () => {
         const h = Number(document.getElementById("height").value);
         const w = Number(document.getElementById("weight").value);
@@ -321,7 +341,7 @@
 
         // ログイン済みならサーバーに記録を保存
         if (!token) {
-          // ゲストは保存せず終了（その場の計算だけ）
+          // ゲストは保存しない（その場の計算だけ）
           return;
         }
 

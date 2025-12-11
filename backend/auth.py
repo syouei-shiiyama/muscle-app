@@ -87,26 +87,26 @@ async def get_current_user(
 # ==== エンドポイント ====
 
 
-@router.post("/register", response_model=schemas.UserRead)
+@router.post("/register")
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """
-    新規ユーザー登録
-    """
-    existing = get_user_by_email(db, user.email)
+    existing = db.query(models.User).filter(models.User.email == user.email).first()
     if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="このメールアドレスは既に登録されています。",
-        )
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-    db_user = models.User(
+    hashed_pw = get_password_hash(user.password)
+
+    new_user = models.User(
         email=user.email,
-        hashed_password=get_password_hash(user.password),
+        username=user.username,      # ★ ここで表示用の名前も保存
+        hashed_password=hashed_pw,
     )
-    db.add(db_user)
+
+    db.add(new_user)
     db.commit()
-    db.refresh(db_user)
-    return db_user
+    db.refresh(new_user)
+
+    return {"message": "User registered successfully"}
+
 
 
 @router.post("/login", response_model=schemas.Token)
@@ -130,7 +130,15 @@ def login(
         data={"sub": str(user.id)},
         expires_delta=access_token_expires,
     )
-    return schemas.Token(access_token=access_token, token_type="bearer")
+
+    # ★ email と username も返す
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "email": user.email,
+        "username": user.username,
+    }
+
 
 
 @router.get("/me", response_model=schemas.UserRead)
