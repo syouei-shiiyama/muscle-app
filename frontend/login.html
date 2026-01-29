@@ -5,7 +5,6 @@
   <title>ログイン / 新規登録</title>
   <link rel="stylesheet" href="/static/style.css" />
   <style>
-    /* タブ切り替え用の軽いスタイル（既存デザインに足すイメージ） */
     .tab-switch {
       display: flex;
       gap: 8px;
@@ -46,16 +45,12 @@
     <div id="login-panel" class="panel active">
       <form id="login-form">
         <div class="form-group">
-          <label class="form-label" for="login-email">
-            メールアドレス
-          </label>
+          <label class="form-label" for="login-email">メールアドレス</label>
           <input id="login-email" type="text" required />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="login-password">
-            パスワード
-          </label>
+          <label class="form-label" for="login-password">パスワード</label>
           <input id="login-password" type="password" required />
         </div>
 
@@ -71,23 +66,17 @@
     <div id="register-panel" class="panel">
       <form id="register-form">
         <div class="form-group">
-          <label class="form-label" for="reg-email">
-            メールアドレス
-          </label>
+          <label class="form-label" for="reg-email">メールアドレス</label>
           <input id="reg-email" type="text" required />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="reg-username">
-            表示名（ニックネーム）
-          </label>
+          <label class="form-label" for="reg-username">表示名（ニックネーム）</label>
           <input id="reg-username" type="text" required />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="reg-password">
-            パスワード
-          </label>
+          <label class="form-label" for="reg-password">パスワード</label>
           <input id="reg-password" type="password" required />
         </div>
 
@@ -137,10 +126,10 @@
         e.preventDefault();
         loginMessage.textContent = "";
 
-        const username = document.getElementById("login-email").value;
+        const email = document.getElementById("login-email").value;
         const password = document.getElementById("login-password").value;
 
-        if (!username || !password) {
+        if (!email || !password) {
           loginMessage.textContent = "メールアドレスとパスワードを入力してください。";
           return;
         }
@@ -152,7 +141,7 @@
               "Content-Type": "application/x-www-form-urlencoded",
             },
             body: new URLSearchParams({
-              username,
+              username: email,   // FastAPI OAuth2 は username キー固定
               password,
             }),
           });
@@ -172,9 +161,11 @@
 
           loginMessage.textContent = "ログインに成功しました！";
 
+          // ✅ ログイン後は app.html へ
           setTimeout(() => {
-            window.location.href = "/static/index.html";
-          }, 500);
+            window.location.href = "/static/app.html";
+          }, 300);
+
         } catch (err) {
           console.error("login fetch error:", err);
           loginMessage.textContent = "通信エラーが発生しました。";
@@ -215,9 +206,11 @@
 
           registerMessage.textContent = "登録に成功しました！そのままログインしてください。";
 
-          // 登録成功したらログインタブに切り替える
+          // ✅ 登録成功したらログインタブへ
           showLogin();
           document.getElementById("login-email").value = email;
+          document.getElementById("login-password").value = "";
+
         } catch (err) {
           console.error("register fetch error:", err);
           registerMessage.textContent = "通信エラーが発生しました。";

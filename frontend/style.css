@@ -10,24 +10,23 @@ body {
   background: radial-gradient(circle at top, #1d4ed8 0, #020617 45%, #000 100%);
   color: #e5e7eb;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 24px;
+
+  /* ★ここを変更：中央寄せをやめる */
+  display: block;
+  padding: 0;
 }
 
-/* 中央のカードっぽい箱 */
+
 .app-wrapper {
   width: 100%;
-  max-width: 720px;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  padding: 24px;
   background: rgba(15, 23, 42, 0.96);
-  border-radius: 24px;
-  padding: 24px 24px 28px;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(148, 163, 184, 0.08);
-  backdrop-filter: blur(10px);
+  box-shadow: none;
 }
+
 
 /* ===== タイトル・テキスト ===== */
 
@@ -229,4 +228,51 @@ button {
 .preset-desc {
   font-size: 12px;
   color: #9ca3af;
+}
+
+.navbtn{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:#e5e7eb;
+  cursor:pointer;
+}
+.navbtn:active{
+  transform:scale(0.98);
+}
+
+/* team.html / achievement.html で使っている .app-wrapper を全幅にする */
+.app-wrapper{
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 24px;
+}
+
+/* body の余白が原因なら */
+body{
+  margin: 0;
+}
+
+/* team / achievement を強制フル幅にする */
+.page-team .app-wrapper,
+.page-achievement .app-wrapper{
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 24px !important;
+}
+
+/* 親が絞ってる場合もあるので親も解放 */
+.page-team .app-wrapper *,
+.page-achievement .app-wrapper *{
+  max-width: none;
+}
+
+/* もし transform/zoom がどこかで当たってたら無効化 */
+.page-team,
+.page-achievement{
+  transform: none !important;
+  zoom: 1 !important;
 }

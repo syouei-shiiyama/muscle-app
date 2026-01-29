@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>チーム比較</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="user-info" style="text-align:right; margin:10px; font-size:16px;"></div>
+
+  <body class="page-team">
+
+  <div class="app-wrapper">
+    <h1>チーム：メンバー別 推移グラフ</h1>
+
+    <!-- チーム操作 -->
+    <section style="margin:12px 0; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:12px;">
+      <h3 style="margin:0 0 8px;">チーム操作</h3>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <!-- 作成 -->
+        <div style="flex:1; min-width:260px;">
+          <div style="font-weight:600; margin-bottom:6px;">チーム作成</div>
+          <div style="display:flex; gap:8px;">
+            <input id="team-create-name" placeholder="チーム名" style="padding:8px; flex:1; min-width:140px;">
+            <button id="team-create-btn" class="primary-button" style="width:auto; padding:8px 12px;">作成</button>
+          </div>
+          <div id="team-create-msg" style="margin-top:6px; font-size:13px; opacity:.85;"></div>
+        </div>
+
+        <!-- 参加（招待コード） -->
+        <div style="flex:1; min-width:260px;">
+          <div style="font-weight:600; margin-bottom:6px;">チーム参加（招待コード）</div>
+          <div style="display:flex; gap:8px;">
+            <input id="team-join-code" placeholder="招待コード" style="padding:8px; flex:1; min-width:140px;">
+            <button id="team-join-btn" class="primary-button" style="width:auto; padding:8px 12px;">参加</button>
+          </div>
+          <div id="team-join-msg" style="margin-top:6px; font-size:13px; opacity:.85;"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-group" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <select id="team-id" style="padding:8px; min-width:180px;">
+        <option value="">チームを選択</option>
+      </select>
+
+      <select id="metric" style="padding:8px;">
+        <option value="level">level</option>
+        <option value="weight">weight</option>
+        <option value="fat">fat</option>
+      </select>
+
+      <button id="load-team" class="primary-button" style="width:auto; padding:8px 12px;">表示</button>
+      <a href="/static/index.html" style="margin-left:auto;">← 戻る</a>
+    </div>
+
+    <p id="team-msg"></p>
+
+    <section class="history-section" style="margin-top:16px;">
+      <canvas id="teamChart"></canvas>
+    </section>
+  </div>
+
+  <script src="/static/script_team.js?v=20260126"></script>
+</body>
+</html>

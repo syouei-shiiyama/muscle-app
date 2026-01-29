@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>種目別 1RM 推移</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="user-info" style="text-align:right; margin:10px; font-size:16px;"></div>
+
+  <div class="app-wrapper">
+    <h1>種目別 1RM 推移</h1>
+
+    <div class="form-group">
+      <label class="form-label">
+        種目:
+        <select id="exerciseSelect"></select>
+      </label>
+    </div>
+
+    <div class="form-group" style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input id="newExerciseName" type="text" placeholder="種目名を追加（例: Bench Press）" style="padding:8px; flex:1; min-width:240px;">
+      <button id="addExerciseBtn" class="primary-button" style="width:auto; padding:8px 12px;">追加</button>
+    </div>
+
+    <hr style="margin:16px 0;">
+
+    <h2 style="margin:0 0 8px;">記録を追加</h2>
+    <div class="form-group">
+      <label class="form-label">
+        記録日:
+        <input id="performedAtLift" type="date" />
+      </label>
+    </div>
+
+    <div class="form-group" style="display:flex; gap:12px; flex-wrap:wrap;">
+      <label class="form-label">
+        重量(kg):
+        <input id="weightKg" type="number" step="0.5" />
+      </label>
+      <label class="form-label">
+        回数(reps):
+        <input id="reps" type="number" />
+      </label>
+    </div>
+
+    <button id="saveLiftBtn" class="primary-button">保存してグラフ更新</button>
+
+    <p id="msg"></p>
+
+    <section class="history-section" style="margin-top:16px;">
+      <canvas id="liftChart"></canvas>
+    </section>
+
+    <p style="margin-top:16px;">
+      <a href="/static/index.html">← 戻る</a>
+    </p>
+  </div>
+
+  <script src="/static/script_lift.js"></script>
+</body>
+</html>

@@ -38,6 +38,12 @@
       </label>
     </div>
 
+    <label class="form-label">
+    記録日:
+    <input id="performedAt" type="date" />
+    </label>
+
+
     <button id="calc-button" class="primary-button">レベルを計算</button>
 
     <!-- BMI 結果 -->
@@ -163,7 +169,9 @@
           return;
         }
 
-        const d = new Date(record.created_at);
+
+        const d = new Date(record.performed_at || record.created_at);
+
         const dateText = isNaN(d)
           ? ""
           : `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
@@ -190,6 +198,8 @@
         `;
       }
 
+
+
       // ===== グラフ描画（サーバーからのリスト） =====
       function updateHistoryChartFromServer(records) {
         // 今の preset の履歴のみ
@@ -204,7 +214,7 @@
         }
 
         const labels = filtered.map((r, i) => {
-          const d = new Date(r.created_at);
+          const d = new Date(r.performed_at || r.created_at);
           if (isNaN(d)) return `#${i + 1}`;
           return `${d.getMonth() + 1}/${d.getDate()}`;
         });
@@ -287,11 +297,22 @@
       // ===== 起動時：履歴読み込み =====
       loadHistoryFromServer();
 
+      document.getElementById("performedAt").value =
+      new Date().toISOString().slice(0,10);
+      
+
       // ===== 計算ボタン =====
       document.getElementById("calc-button").addEventListener("click", async () => {
         const h = Number(document.getElementById("height").value);
         const w = Number(document.getElementById("weight").value);
         const f = Number(document.getElementById("bodyFat").value);
+
+        const performedAt = document.getElementById("performedAt").value;
+        if (!performedAt) {
+          alert("記録日を選択してください");
+          return;
+        }
+
 
         if (!h || !w) {
           alert("身長と体重は入力してください");
@@ -310,6 +331,12 @@
               preset_id: presetId,
             }),
           });
+
+          if (!performedAt) {
+            alert("記録日を選択してください");
+            return;
+          }
+
 
           data = await res.json();
 
@@ -358,13 +385,15 @@
               weight: w,
               fat: f,
               level: data.level,
+              performed_at: performedAt,  
             }),
           });
 
           if (!res2.ok) {
             const err = await res2.json().catch(() => ({}));
             console.error("POST /records error", res2.status, err);
-            alert("サーバーへの保存に失敗しました: " + (err.detail || res2.status));
+            alert("POST /records エラー:\n" + JSON.stringify(err, null, 2));
+            return;
           } else {
             console.log("Record saved to server");
             // 保存が成功したら、履歴を再読み込み

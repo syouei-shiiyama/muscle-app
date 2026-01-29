@@ -1,80 +1,71 @@
 // /static/script.js
 
 document.addEventListener("DOMContentLoaded", () => {
+  // --- preset cards (index.html) ---
   const cards = document.querySelectorAll(".preset-card");
-
-  // index.html（プリセット選択画面）の処理
-  if (cards.length > 0) {
+  if (cards.length) {
     cards.forEach((card) => {
       card.addEventListener("click", () => {
         const presetId = card.dataset.id;
         if (!presetId) return;
-        // 選んだプリセットIDをクエリに付けて input 画面へ
         window.location.href = `/static/input.html?preset=${presetId}`;
       });
     });
   }
 
-  // ここから先で、input.html や login.html 用の処理も足していける
-  // （今はまず index.html を確実に動かす）
-});
-
-
-document.addEventListener("DOMContentLoaded", () => {
+  // --- login user display (login.html など) ---
   const name = localStorage.getItem("user_name");
-  if (name) {
-    document.getElementById("login-user-display").textContent =
-      `ログイン中：${name} さん`;
+  const loginUserDisplay = document.getElementById("login-user-display");
+  if (loginUserDisplay && name) {
+    loginUserDisplay.textContent = `ログイン中：${name} さん`;
   }
-});
 
-document.getElementById("register-button").addEventListener("click", async () => {
-  const email = document.getElementById("reg-email").value;
-  const username = document.getElementById("reg-username").value;
-  const password = document.getElementById("reg-password").value;
+  // --- register button (login.html など) ---
+  const registerBtn = document.getElementById("register-button");
+  if (registerBtn) {
+    registerBtn.addEventListener("click", async () => {
+      const emailEl = document.getElementById("reg-email");
+      const usernameEl = document.getElementById("reg-username");
+      const passwordEl = document.getElementById("reg-password");
+      const msg = document.getElementById("register-message");
+      if (!emailEl || !usernameEl || !passwordEl || !msg) return;
 
-  const res = await fetch("/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, username, password })
-  });
+      const res = await fetch("/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: emailEl.value,
+          username: usernameEl.value,
+          password: passwordEl.value,
+        }),
+      });
 
-  const data = await res.json();
-  const msg = document.getElementById("register-message");
-
-  if (res.ok) {
-    msg.textContent = "登録に成功しました。ログインしてください。";
-  } else {
-    msg.textContent = data.detail || "登録に失敗しました。";
+      const data = await res.json().catch(() => ({}));
+      msg.textContent = res.ok
+        ? "登録に成功しました。ログインしてください。"
+        : (data.detail || "登録に失敗しました。");
+    });
   }
-});
 
-document.addEventListener("DOMContentLoaded", () => {
+  // --- header user-info (全ページ共通) ---
   const userInfo = document.getElementById("user-info");
-
-  const username = localStorage.getItem("user_name");
   const token = localStorage.getItem("access_token");
 
-  if (username && token) {
-    // ログイン中
-    userInfo.innerHTML = `
-      👤 <strong>${username}</strong> さん　
-      <button id="logout-btn" style="padding:4px 8px;">ログアウト</button>
-    `;
-
-    // ログアウトボタン押したとき
-    document.getElementById("logout-btn").addEventListener("click", () => {
-      localStorage.removeItem("user_name");
-      localStorage.removeItem("user_email");
-      localStorage.removeItem("access_token");
-      location.reload(); // 画面更新
-    });
-
-  } else {
-    // 未ログインの場合
-    userInfo.innerHTML = `
-      <a href="/static/login.html">ログイン / 新規登録</a>
-    `;
+  if (userInfo) {
+    if (name && token) {
+      userInfo.innerHTML = `👤 <strong>${name}</strong> さん　
+        <button id="logout-btn" style="padding:4px 8px;">ログアウト</button>`;
+      const logoutBtn = document.getElementById("logout-btn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+          localStorage.removeItem("user_name");
+          localStorage.removeItem("user_email");
+          localStorage.removeItem("access_token");
+          location.reload();
+        });
+      }
+    } else {
+      userInfo.innerHTML = `<a href="/static/login.html">ログイン / 新規登録</a>`;
+    }
   }
 });
-

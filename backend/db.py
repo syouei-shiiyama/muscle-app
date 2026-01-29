@@ -29,11 +29,5 @@ def get_db() -> Generator:
 
 
 def init_db() -> None:
-    """
-    アプリ起動時に呼び出してテーブルを作る。
-    models を import することで Base.metadata にテーブル定義が登録される。
-    """
-    from db import Base, engine
     import models  # noqa: F401
-
     Base.metadata.create_all(bind=engine)

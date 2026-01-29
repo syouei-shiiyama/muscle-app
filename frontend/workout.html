@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>筋トレ記録（セット入力）</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .row input, .row select { padding: 6px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-top: 12px; }
+    .sets { margin-top: 8px; }
+    .set-line { display:flex; gap:8px; align-items:center; flex-wrap: wrap; margin: 8px 0; }
+    .btn { padding: 8px 12px; cursor:pointer; border-radius: 8px; border: 1px solid #ccc; background: #fff; }
+    .btn-primary { border: none; background: #222; color:#fff; }
+    .muted { color: #666; font-size: 13px; }
+    .hr { height:1px; background:#eee; margin: 12px 0; }
+    .right { text-align:right; }
+  </style>
+</head>
+<body>
+  <div id="user-info" style="text-align:right; margin:10px; font-size:16px;"></div>
+
+  <div class="container">
+    <h1>筋トレ記録（セット入力）</h1>
+    <p class="muted">例：ベンチプレス 60kg × 8回 × 3セット みたいに記録できます</p>
+
+    <div class="card">
+      <div class="row">
+        <label>記録日：
+          <input id="performedAt" type="date" />
+        </label>
+
+        <label style="flex:1; min-width:240px;">メモ：
+          <input id="note" type="text" placeholder="例）胸の日、調子良かった" style="width:100%;" />
+        </label>
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>セット</h3>
+      <div class="row">
+        <!-- ✅ ボタンは1つに統一 -->
+        <button id="add-set-btn" type="button" class="btn">＋ セット追加</button>
+        <span class="muted">（あとで種目が増えても、Exerciseを増やすだけでOK）</span>
+      </div>
+
+      <div id="sets" class="sets"></div>
+
+      <div class="hr"></div>
+
+      <div class="row right">
+        <button id="save-btn" type="button" class="btn btn-primary">保存（/workouts）</button>
+      </div>
+
+      <p id="msg" class="muted"></p>
+    </div>
+
+    <div class="card">
+      <h3>種目を追加</h3>
+      <div class="row">
+        <input id="new-ex-name" type="text" placeholder="例）ベンチプレス" style="min-width:240px;" />
+        <button id="add-ex-btn" type="button" class="btn">種目追加（/exercises）</button>
+      </div>
+      <p class="muted">※重複防止は backend 側でやるのが安全</p>
+    </div>
+
+    <!-- ✅ 履歴セクションもHTMLの中に入れる -->
+    <div class="card">
+      <h3>トレーニング履歴</h3>
+      <div id="workout-history">読み込み中...</div>
+    </div>
+
+    <p class="muted">
+      <a href="/static/app.html">← 戻る</a>
+    </p>
+  </div>
+</body>
+</html>
+
+<script src="/static/script_workout.js?v=20260126"></script>
